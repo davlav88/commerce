@@ -3,5 +3,28 @@
 {% block body %}
     <h2>Active Listings</h2>
 
-    TODO
+    {% if auctions %}
+    <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Current price</th>
+            <th scope="col">Image</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for auction in auctions %}
+            <tr>
+                <td>{{auction.id}}</td>
+                <td>{{auction.name}}</td>
+                <td>{{auction.description}}</td>
+                <td>{{auction.price}}</td>
+                <td>{{auction.image}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
 {% endblock %}
