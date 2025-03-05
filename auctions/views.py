@@ -1,10 +1,11 @@
+import queue
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, Auctions, Bids, Comments
+from .models import User, Auctions, Bids, Comments, Wishlist
 
 
 def index(request):
@@ -71,17 +72,52 @@ def create(request):
     if request.method == "POST":
         name = request.POST['name']
         description = request.POST['description']
-        bid = request.POST['bid']
+        price = request.POST['price']
         image = request.POST['image']
+        user = request.user
         
         try:
-            bid = Bids.objects.create(user=request.user, item=f"{name}", price=f"{bid}")
-            bid.save()
-            item = Auctions.objects.create(name=f"{name}", description=f"{description}", image=f"{image}", price=f"{bid.price}")
-            item.save()
-            return HttpResponseRedirect("/index/")
+            item = Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}")
+
+            return HttpResponseRedirect(reverse(index))
         
         except IntegrityError:
             return render(request, "auctions/create.html", {
-                "message": "There was an error creatring your listing, Try again."
+                "message": "There was an error creating your listing, Try again."
             })
+            
+def listings(request, name):
+    listings = Auctions.objects.all()
+    listings_lower = [listing.name.lower() for listing in listings]
+    
+    if request.method == "GET":
+        if name.lower() in listings_lower:
+            for listing in listings:
+                if listing.name.lower() == name.lower():
+                    q = listing
+
+            return render(request, "auctions/listings.html",{
+                "listing": q
+            })
+        
+        else:
+            return HttpResponseRedirect(reverse(index), {
+                "message": "Listing not found"
+            })
+            
+    if request.method == "POST":
+        if 'wishlist' in request.POST:
+            user = request.user
+            item = request.POST['id']
+            auction = Auctions.objects.get(pk=item)
+            
+            try:
+                Wishlist.objects.create(user=user, item=auction)
+                
+                return HttpResponseRedirect(reverse(index), {
+                "message": "Item added to your Wishlist"
+            })
+            except IntegrityError:
+                return render(request, "auctions/listings.html", {
+                    "message": "There was an error adding the item to your wishlist. Try again."
+                })

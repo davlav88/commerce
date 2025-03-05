@@ -1,30 +1,28 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
+
     <h2>Active Listings</h2>
 
     {% if auctions %}
-    <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">Name</th>
-            <th scope="col">Description</th>
-            <th scope="col">Current price</th>
-            <th scope="col">Image</th>
-          </tr>
-        </thead>
-        <tbody>
+
+    <div class="container">
+        <div class="row g-3">
             {% for auction in auctions %}
-            <tr>
-                <td>{{auction.id}}</td>
-                <td>{{auction.name}}</td>
-                <td>{{auction.description}}</td>
-                <td>{{auction.price}}</td>
-                <td>{{auction.image}}</td>
-            </tr>
+                <div class="col">
+                    <div class="card" style="width: 18rem;">
+                        <img src="{{ auction.image }}" class="card-img-top" alt="{{ auction.name }}">
+                        <div class="card-body">
+                          <h5 class="card-title">{{ auction.name }}</h5>
+                          <p class="card-text">{{ auction.description }}</p>
+                          <p class="card-text">{{ auction.price }}$</p>
+                          <a href="{% url 'listings' auction.name %}" class="btn btn-primary">View Auction</a>
+                        </div>
+                      </div>
+                </div>
             {% endfor %}
-        </tbody>
-      </table>
+        </div>
+      </div>
+
       {% endif %}
 {% endblock %}

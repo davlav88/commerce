@@ -1,0 +1,22 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+
+    <h2>{{ listing.name }}</h2>
+
+    {% if message %}
+        <div>{{ message }}</div>
+    {% endif %}
+
+    <img src="{{ listing.image }}" class="card-img-top" alt="{{ listing.name }}">
+    <h5 class="card-title">{{ listing.name }}</h5>
+    <p class="card-text">{{ listing.description }}</p>
+    <p class="card-text">{{ listing.price }}$</p>
+
+    <form method="post" action="{% url 'listings' listing.name %}">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ listing.id }}">
+        <input type="submit" name="wishlist" value="Wishlist">
+    </form>
+
+{% endblock %}
