@@ -1,11 +1,14 @@
 import queue
+import re
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, Auctions, Bids, Comments, Wishlist
+import auctions
+
+from .models import User, Auctions, Bids, Comments, Watchlist
 
 
 def index(request):
@@ -77,47 +80,106 @@ def create(request):
         user = request.user
         
         try:
-            item = Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}")
+            Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}")
 
-            return HttpResponseRedirect(reverse(index))
+            return render(request, "auctions/index.html", {
+                "message": "Auction created"
+            })
         
         except IntegrityError:
             return render(request, "auctions/create.html", {
                 "message": "There was an error creating your listing, Try again."
             })
             
-def listings(request, name):
-    listings = Auctions.objects.all()
-    listings_lower = [listing.name.lower() for listing in listings]
-    
-    if request.method == "GET":
-        if name.lower() in listings_lower:
-            for listing in listings:
-                if listing.name.lower() == name.lower():
-                    q = listing
-
-            return render(request, "auctions/listings.html",{
-                "listing": q
-            })
+def listings(request, id):
         
+    if request.method == "GET":
+        q = Auctions.objects.get(pk=id)
+        message = request.GET.get('message')
+        
+        if q:
+            w = Watchlist.objects.filter(item__id=id)
+            if w:
+                button = "Remove from Watchlist"   
+            else:
+                button = "Add to Watchlist"
+            
+            return render(request, "auctions/listings.html",{
+                "listing": q,
+                "button": button,
+                "message": message
+            })
+            
         else:
-            return HttpResponseRedirect(reverse(index), {
+            return render(request, "auctions/listings.html",{
                 "message": "Listing not found"
             })
+
             
-    if request.method == "POST":
-        if 'wishlist' in request.POST:
-            user = request.user
-            item = request.POST['id']
-            auction = Auctions.objects.get(pk=item)
-            
+    if request.method == "POST" and 'watchlist' in request.POST:
+        user = request.user
+        auction = Auctions.objects.get(pk=id)
+        watchlist = Watchlist.objects.filter(user=user,item=auction)
+        
+        if not watchlist:
             try:
-                Wishlist.objects.create(user=user, item=auction)
+                Watchlist.objects.create(user=user, item=auction)
                 
-                return HttpResponseRedirect(reverse(index), {
-                "message": "Item added to your Wishlist"
+                return render(request, "auctions/listings.html", {
+                "message": "Item added to your Watchlist",
+                "listing": auction,
+                "button": "Remove from Watchlist"
             })
             except IntegrityError:
                 return render(request, "auctions/listings.html", {
-                    "message": "There was an error adding the item to your wishlist. Try again."
+                "message": "There was an error adding the item to your watchlist. Try again.",
+                "listing": auction,
+                "button": "Add to Watchlist"
+            })
+        else:
+            try:
+                watchlist.delete()
+                
+                return render(request, "auctions/listings.html", {
+                    "message": "Item removed from Watchlist",
+                    "listing": auction,
+                    "button": "Add to Watchlist"
                 })
+            except IntegrityError:
+                return render(request, "auctions/listings.html", {
+                    "message": "There was an error removing the item from your watchlist. Try again.",
+                    "listing": auction,
+                    "button": "Remove from Watchlist"
+                })
+                
+    if request.method == "POST" and 'bid' in request.POST:
+        user = request.user
+        auction = Auctions.objects.get(pk=id)
+        bid_amount = int(request.POST['bid_amount'])
+        
+        bids = Bids.objects.filter(item__id=id)
+        if bids:
+            highest_bid = Bids.objects.order_by('-price').first()
+            if bid_amount > highest_bid.price:
+                Bids.objects.create(user=user,item=auction, price=bid_amount)
+            else:
+                return HttpResponseRedirect(f'/listings/{id}?message=Bid too low')
+
+        else:
+            if bid_amount > int(auction.price):
+                Bids.objects.create(user=user,item=auction, price=bid_amount)
+            else:
+                return HttpResponseRedirect(f'/listings/{id}?message=Bid too low')
+                
+            
+    return HttpResponseRedirect(reverse("index"))
+        
+        
+                
+def watchlist(request):
+    if request.method == "GET":
+        user = request.user
+        
+        return render(request, "auctions/watchlist.html", {
+            "auctions": Watchlist.objects.filter(user=user)
+        })

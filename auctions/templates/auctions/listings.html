@@ -13,10 +13,19 @@
     <p class="card-text">{{ listing.description }}</p>
     <p class="card-text">{{ listing.price }}$</p>
 
-    <form method="post" action="{% url 'listings' listing.name %}">
-        {% csrf_token %}
-        <input type="hidden" name="id" value="{{ listing.id }}">
-        <input type="submit" name="wishlist" value="Wishlist">
-    </form>
+    <div class="form_item">
+        <form method="POST" action="{% url 'listings' listing.id %}">
+            {% csrf_token %}
+            <input type="submit" name="watchlist" value="{{button}}">
+        </form>
+    </div>
+
+    <div class="form_item">
+        <form method="POST" action="{% url 'listings' listing.id %}">
+            {% csrf_token %}
+            <input type="number" name="bid_amount">
+            <input type="submit" name="bid" value="Place bid">
+        </form>
+    </div>
 
 {% endblock %}

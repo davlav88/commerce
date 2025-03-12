@@ -16,7 +16,7 @@
                           <h5 class="card-title">{{ auction.name }}</h5>
                           <p class="card-text">{{ auction.description }}</p>
                           <p class="card-text">{{ auction.price }}$</p>
-                          <a href="{% url 'listings' auction.name %}" class="btn btn-primary">View Auction</a>
+                          <a href="{% url 'listings' auction.id %}" class="btn btn-primary">View Auction</a>
                         </div>
                       </div>
                 </div>
