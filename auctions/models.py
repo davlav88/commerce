@@ -12,9 +12,10 @@ class Auctions(models.Model):
     description = models.TextField()
     image = models.CharField(max_length=250)
     price = models.IntegerField()
+    status = models.CharField(max_length=10)
     
     def __str__(self):
-        return self.name
+        return f"{self.name} is {self.status}"
     
 class Bids(models.Model):
     user = models.ForeignKey(User, related_name="bids", on_delete=models.CASCADE)

@@ -83,7 +83,8 @@ def create(request):
             Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}")
 
             return render(request, "auctions/index.html", {
-                "message": "Auction created"
+                "message": "Auction created",
+                "auctions": Auctions.objects.all()
             })
         
         except IntegrityError:
@@ -96,6 +97,7 @@ def listings(request, id):
     if request.method == "GET":
         q = Auctions.objects.get(pk=id)
         message = request.GET.get('message')
+        creator = q.user.id
         
         if q:
             w = Watchlist.objects.filter(item__id=id)
@@ -107,7 +109,8 @@ def listings(request, id):
             return render(request, "auctions/listings.html",{
                 "listing": q,
                 "button": button,
-                "message": message
+                "message": message,
+                "creator": creator
             })
             
         else:
@@ -166,12 +169,23 @@ def listings(request, id):
                 return HttpResponseRedirect(f'/listings/{id}?message=Bid too low')
 
         else:
-            if bid_amount > int(auction.price):
+            if bid_amount >= int(auction.price):
                 Bids.objects.create(user=user,item=auction, price=bid_amount)
             else:
                 return HttpResponseRedirect(f'/listings/{id}?message=Bid too low')
-                
             
+    if request.method == "POST" and 'close-auction' in request.POST:
+        q = Auctions.objects.get(pk=id)
+        highest_bid = Bids.objects.order_by('-price').first()
+        winner = highest_bid.user
+        print("clicked")
+        print(q.status)
+        try:
+            q.status = "closed"
+            q.save()
+        except IntegrityError:
+            pass
+                        
     return HttpResponseRedirect(reverse("index"))
         
         

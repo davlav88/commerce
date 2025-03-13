@@ -13,19 +13,34 @@
     <p class="card-text">{{ listing.description }}</p>
     <p class="card-text">{{ listing.price }}$</p>
 
-    <div class="form_item">
-        <form method="POST" action="{% url 'listings' listing.id %}">
-            {% csrf_token %}
-            <input type="submit" name="watchlist" value="{{button}}">
-        </form>
-    </div>
+    <div>Auction Status:{{ listing.status }}</div>
+    {% if listing.status == "open" %}
+        <div class="mb-4">
+            <form method="POST" action="{% url 'listings' listing.id %}">
+                {% csrf_token %}
+                <input class="btn btn-primary" type="submit" name="watchlist" value="{{button}}">
+            </form>
+        </div>
 
-    <div class="form_item">
-        <form method="POST" action="{% url 'listings' listing.id %}">
-            {% csrf_token %}
-            <input type="number" name="bid_amount">
-            <input type="submit" name="bid" value="Place bid">
-        </form>
-    </div>
+        <div class="mb-4">
+            <form method="POST" action="{% url 'listings' listing.id %}">
+                {% csrf_token %}
+                <div class="input-group mb-3">
+                    <span class="input-group-text">$</span>
+                    <input type="text" class="form-control" aria-label="Amount (to the nearest dollar)">
+                    <span class="input-group-text">.00</span>
+                </div>
+                <input class="btn btn-secondary" type="submit" name="bid" value="Place bid">
+            </form>
+        </div>
+        {% if user.id == creator %}
+            <div class="mb-4">
+                <form method="POST" action="{% url 'listings' listing.id %}">
+                    {% csrf_token %}
+                    <input class="btn btn-danger" type="submit" name="close-auction" value="Close Auction">
+                </form>
+            </div>
+        {% endif %}
+    {% endif %}
 
 {% endblock %}
