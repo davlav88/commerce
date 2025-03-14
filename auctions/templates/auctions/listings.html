@@ -14,8 +14,13 @@
     <p class="card-text">{{ listing.price }}$</p>
 
     <div>Auction Status:{{ listing.status }}</div>
+    {% if user == winner %}
+        <div>Auction Winner:{{ winner }}</div>
+    {% endif%}
+
+
     {% if listing.status == "open" %}
-        <div class="mb-4">
+        <div class="my-4">
             <form method="POST" action="{% url 'listings' listing.id %}">
                 {% csrf_token %}
                 <input class="btn btn-primary" type="submit" name="watchlist" value="{{button}}">
@@ -27,7 +32,7 @@
                 {% csrf_token %}
                 <div class="input-group mb-3">
                     <span class="input-group-text">$</span>
-                    <input type="text" class="form-control" aria-label="Amount (to the nearest dollar)">
+                    <input type="text" name="bid_amount" class="form-control" aria-label="Amount (to the nearest dollar)">
                     <span class="input-group-text">.00</span>
                 </div>
                 <input class="btn btn-secondary" type="submit" name="bid" value="Place bid">
@@ -41,6 +46,33 @@
                 </form>
             </div>
         {% endif %}
+    {% endif %}
+
+    <div class="my-4">
+        <form method="POST" action="{% url 'listings' listing.id %}">
+            {% csrf_token %}
+            <div class="form-floating mb-2">
+                <textarea name="comment" class="form-control" placeholder="Leave a comment here" id="floatingTextarea"></textarea>
+                <label for="floatingTextarea">Comments</label>
+            </div>
+            <input class="btn btn-primary" type="submit" name="submit_comment" value="Submit Comment">
+        </form>
+    </div>
+
+    {% if comments %}
+        {% for comment in comments %}
+            <div class="card mb-3">
+                <div class="card-header">
+                {{ comment.timestamp }}
+                </div>
+                <div class="card-body">
+                <blockquote class="blockquote mb-0">
+                    <p>{{ comment.comment }}</p>
+                    <footer class="blockquote-footer">{{ comment.user }}</footer>
+                </blockquote>
+                </div>
+            </div>
+        {% endfor %}
     {% endif %}
 
 {% endblock %}

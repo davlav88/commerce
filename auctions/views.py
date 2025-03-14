@@ -1,5 +1,3 @@
-import queue
-import re
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
@@ -8,7 +6,7 @@ from django.urls import reverse
 
 import auctions
 
-from .models import User, Auctions, Bids, Comments, Watchlist
+from .models import User, Auctions, Bids, Comments, Watchlist, Winners
 
 
 def index(request):
@@ -78,19 +76,15 @@ def create(request):
         price = request.POST['price']
         image = request.POST['image']
         user = request.user
-        
-        try:
-            Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}")
+        status = "open"
+                
+        Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}")
 
-            return render(request, "auctions/index.html", {
+        return render(request, "auctions/index.html", {
                 "message": "Auction created",
                 "auctions": Auctions.objects.all()
             })
         
-        except IntegrityError:
-            return render(request, "auctions/create.html", {
-                "message": "There was an error creating your listing, Try again."
-            })
             
 def listings(request, id):
         
@@ -99,6 +93,16 @@ def listings(request, id):
         message = request.GET.get('message')
         creator = q.user.id
         
+        try:
+            winner = Winners.objects.get(item__id=id).user
+        except Winners.DoesNotExist:
+            winner = None
+            
+        try:
+            comments = Comments.objects.filter(item__id=id)
+        except Winners.DoesNotExist:
+            comments = None    
+                
         if q:
             w = Watchlist.objects.filter(item__id=id)
             if w:
@@ -110,7 +114,9 @@ def listings(request, id):
                 "listing": q,
                 "button": button,
                 "message": message,
-                "creator": creator
+                "creator": creator,
+                "winner": winner,
+                "comments":comments
             })
             
         else:
@@ -178,14 +184,32 @@ def listings(request, id):
         q = Auctions.objects.get(pk=id)
         highest_bid = Bids.objects.order_by('-price').first()
         winner = highest_bid.user
-        print("clicked")
-        print(q.status)
+
         try:
             q.status = "closed"
             q.save()
+
+            Winners.objects.create(user=winner, item=q)
+            
+            
         except IntegrityError:
             pass
                         
+    if request.method == "POST" and 'submit_comment' in request.POST:
+        body = request.POST['comment']
+        user = request.user
+        q = Auctions.objects.get(pk=id)
+
+        
+        try:
+            Comments.objects.create(user=user,comment=body, item=q)
+        except IntegrityError:
+            return render(request, "auctions/listings.html",{
+                "message": "Try again"
+            })
+        
+
+    
     return HttpResponseRedirect(reverse("index"))
         
         
