@@ -1,4 +1,6 @@
+from unicodedata import category
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -6,8 +8,7 @@ from django.urls import reverse
 
 import auctions
 
-from .models import User, Auctions, Bids, Comments, Watchlist, Winners
-
+from .models import User, Auctions, Bids, Comments, Watchlist, Winners, Categories
 
 def index(request):
     return render(request, "auctions/index.html", {
@@ -66,42 +67,62 @@ def register(request):
     else:
         return render(request, "auctions/register.html")
     
+
+@login_required
 def create(request):
     if request.method == "GET":
-        return render(request, "auctions/create.html")
+        message = request.GET.get('message')
+        
+        return render(request, "auctions/create.html", {
+            "categories": Categories.objects.all(),
+            "message":message
+        })
     
     if request.method == "POST":
         name = request.POST['name']
         description = request.POST['description']
         price = request.POST['price']
         image = request.POST['image']
+        category_input = request.POST['category']
+        category = Categories.objects.get(name=category_input)
         user = request.user
         status = "open"
-                
-        Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}")
+        
+        if type(price) == int and price > 0:
+            Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}", category=category)
+        else:
+            message = "Price must be a positive integer"
+            
+            return HttpResponseRedirect(f'/create?message={message}')
 
         return render(request, "auctions/index.html", {
                 "message": "Auction created",
                 "auctions": Auctions.objects.all()
             })
         
-            
+@login_required          
 def listings(request, id):
         
     if request.method == "GET":
         q = Auctions.objects.get(pk=id)
         message = request.GET.get('message')
-        creator = q.user.id
+        creator = User.objects.get(id=q.user.id)
         
         try:
             winner = Winners.objects.get(item__id=id).user
         except Winners.DoesNotExist:
-            winner = None
+            winner = "No winner yet"
+            
+        try:
+            highest_bid = Bids.objects.filter(item__id=id).order_by('-price').first()
+        except highest_bid.DoesNotExist:
+            highest_bid = "No bids yet"
+
             
         try:
             comments = Comments.objects.filter(item__id=id)
         except Winners.DoesNotExist:
-            comments = None    
+            comments = "No comments yet"    
                 
         if q:
             w = Watchlist.objects.filter(item__id=id)
@@ -116,7 +137,8 @@ def listings(request, id):
                 "message": message,
                 "creator": creator,
                 "winner": winner,
-                "comments":comments
+                "comments":comments,
+                "highest_bid": highest_bid,
             })
             
         else:
@@ -164,21 +186,25 @@ def listings(request, id):
     if request.method == "POST" and 'bid' in request.POST:
         user = request.user
         auction = Auctions.objects.get(pk=id)
-        bid_amount = int(request.POST['bid_amount'])
+        bid_amount = request.POST['bid_amount']
         
-        bids = Bids.objects.filter(item__id=id)
-        if bids:
-            highest_bid = Bids.objects.order_by('-price').first()
-            if bid_amount > highest_bid.price:
-                Bids.objects.create(user=user,item=auction, price=bid_amount)
-            else:
-                return HttpResponseRedirect(f'/listings/{id}?message=Bid too low')
+        if type(bid_amount) == int and bid_amount > 0:
+        
+            bids = Bids.objects.filter(item__id=id)
+            if bids:
+                highest_bid = Bids.objects.order_by('-price').first()
+                if bid_amount > highest_bid.price:
+                    Bids.objects.create(user=user,item=auction, price=bid_amount)
+                else:
+                    return HttpResponseRedirect(f'/listings/{id}?message=Bid too low')
 
-        else:
-            if bid_amount >= int(auction.price):
-                Bids.objects.create(user=user,item=auction, price=bid_amount)
             else:
-                return HttpResponseRedirect(f'/listings/{id}?message=Bid too low')
+                if bid_amount >= int(auction.price):
+                    Bids.objects.create(user=user,item=auction, price=bid_amount)
+                else:
+                    return HttpResponseRedirect(f'/listings/{id}?message=Bid too low')
+        else: 
+            return HttpResponseRedirect(f'/listings/{id}?message=Bid must be a positive integer')
             
     if request.method == "POST" and 'close-auction' in request.POST:
         q = Auctions.objects.get(pk=id)
@@ -204,16 +230,15 @@ def listings(request, id):
         try:
             Comments.objects.create(user=user,comment=body, item=q)
         except IntegrityError:
-            return render(request, "auctions/listings.html",{
-                "message": "Try again"
-            })
+            return HttpResponseRedirect(f'/listings/{id}?message=Invalid comment')
+
         
 
     
     return HttpResponseRedirect(reverse("index"))
         
         
-                
+@login_required               
 def watchlist(request):
     if request.method == "GET":
         user = request.user
@@ -221,3 +246,32 @@ def watchlist(request):
         return render(request, "auctions/watchlist.html", {
             "auctions": Watchlist.objects.filter(user=user)
         })
+        
+@login_required
+def all_categories(request):
+    try:
+        categories = Categories.objects.all()
+    except categories.DoesNotExist:
+        categories = "No categories"
+                                
+    return render(request,"auctions/categories.html", {
+        "categories":categories
+    })
+    
+@login_required
+def category(request,name):
+    message = ""
+    category = Categories.objects.get(name=name)
+    if not category:
+        message = "Category doesn't exist"
+    
+    auctions = Auctions.objects.filter(category__name=name)
+    if not auctions:
+        message = "No auctions for that category"
+        
+    return render(request,"auctions/category.html", {
+        "auctions":auctions,
+        "category":category,
+        "message":message
+    })
+    

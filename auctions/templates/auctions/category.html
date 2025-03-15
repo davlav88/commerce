@@ -1,0 +1,35 @@
+{% extends "auctions/layout.html" %} {% block body %}
+
+<h2>{{category.name}}</h2>
+
+{% if message %}
+<div class="alert alert-warning" role="alert">
+  {{message}}
+</div>
+{% endif %}
+
+<div class="container">
+  <div class="row row-cols-3 g-3">
+    {% for auction in auctions %}
+    <div class="col">
+      <div class="card" style="width: 18rem">
+        <img
+          src="{{ auction.image }}"
+          class="card-img-top"
+          alt="{{ auction.name }}"
+        />
+        <div class="card-body">
+          <h5 class="card-title">{{ auction.name }}</h5>
+          <p class="card-text">{{ auction.description }}</p>
+          <p class="card-text">{{ auction.price }}$</p>
+          <a href="{% url 'listings' auction.id %}" class="btn btn-primary"
+            >View Auction</a
+          >
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
