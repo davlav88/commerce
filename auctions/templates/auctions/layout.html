@@ -50,6 +50,12 @@
       {% endif %}
     </ul>
     <hr />
+
+    {% if message %}
+      <div class="alert alert-danger" role="alert">
+        {{message}}
+      </div>
+    {% endif %}
     {% block body %} {% endblock %}
   </body>
 </html>
