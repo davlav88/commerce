@@ -79,7 +79,7 @@ def create(request):
     if request.method == "POST":
         name = request.POST['name']
         description = request.POST['description']
-        price = request.POST['price']
+        price = int(request.POST['price'])
         image = request.POST['image']
         category_input = request.POST['category']
         category = Categories.objects.get(name=category_input)
@@ -90,8 +90,8 @@ def create(request):
             Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}", category=category)
         except ValueError:
             message = "Price must be a positive integer"
-            
-            return HttpResponseRedirect(f'/create?message={message}')
+            alert_class = "alert-warning"
+            return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
 
         return render(request, "auctions/index.html", {
                 "message": "Auction created",
@@ -156,44 +156,34 @@ def listings(request, id):
         if not watchlist:
             try:
                 Watchlist.objects.create(user=user, item=auction)
-                
-                return render(request, "auctions/listings.html", {
-                "message": "Item added to your Watchlist",
-                "alert_class": "alert-success",
-                "listing": auction,
-                "button": "Remove from Watchlist"
-            })
+                message = "Item added to your Watchlist"
+                alert_class = "alert-success"
+                return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
+
             except IntegrityError:
-                return render(request, "auctions/listings.html", {
-                "message": "There was an error adding the item to your watchlist. Try again.",
-                "alert_class": "alert-danger",
-                "listing": auction,
-                "button": "Add to Watchlist"
-            })
+                message = "There was an error adding the item to your watchlist. Try again."
+                alert_class = "alert-danger"
+                return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
+
         else:
             try:
                 watchlist.delete()
-                
-                return render(request, "auctions/listings.html", {
-                    "message": "Item removed from Watchlist",
-                    "alert_class": "alert-success",
-                    "listing": auction,
-                    "button": "Add to Watchlist"
-                })
+                message = "Item removed from Watchlist"
+                alert_class = "alert-success"
+                return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
+
             except IntegrityError:
-                return render(request, "auctions/listings.html", {
-                    "message": "There was an error removing the item from your watchlist. Try again.",
-                    "alert_class": "alert-danger",
-                    "listing": auction,
-                    "button": "Remove from Watchlist"
-                })
+                message = "There was an error removing the item from your watchlist. Try again."
+                alert_class = "alert-danger"
+                return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
+
                 
     if request.method == "POST" and 'bid' in request.POST:
         user = request.user
         auction = Auctions.objects.get(pk=id)
         bid_amount = request.POST['bid_amount']
         
-        if type(bid_amount) == int and bid_amount > 0:
+        if bid_amount > 0:
         
             bids = Bids.objects.filter(item__id=id)
             if bids:
@@ -201,15 +191,21 @@ def listings(request, id):
                 if bid_amount > highest_bid.price:
                     Bids.objects.create(user=user,item=auction, price=bid_amount)
                 else:
-                    return HttpResponseRedirect(f'/listings/{id}?message=Bid too low&alert_class=alert-warning')
+                    message = "Bid too low"
+                    alert_class = "alert-warning"
+                    return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
 
             else:
                 if bid_amount >= int(auction.price):
                     Bids.objects.create(user=user,item=auction, price=bid_amount)
                 else:
-                    return HttpResponseRedirect(f'/listings/{id}?message=Bid too low&alert_class=alert-warning')
+                    message = "Bid too low"
+                    alert_class = "alert-warning"
+                    return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
         else: 
-            return HttpResponseRedirect(f'/listings/{id}?message=Bid must be a positive integer&alert_class=alert-warning')
+            message = "Bid must be a positive integer"
+            alert_class = "alert-warning"
+            return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
             
     if request.method == "POST" and 'close-auction' in request.POST:
         q = Auctions.objects.get(pk=id)
@@ -235,7 +231,9 @@ def listings(request, id):
         try:
             Comments.objects.create(user=user,comment=body, item=q)
         except IntegrityError:
-            return HttpResponseRedirect(f'/listings/{id}?message=Invalid comment&alert_class=alert-danger')
+            message = "Invalid comment"
+            alert_class = "alert-danger"
+            return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
 
         
 
