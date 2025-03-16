@@ -10,7 +10,7 @@
             {% for auction in auctions %}
                 <div class="col">
                     <div class="card" style="width: 18rem;">
-                        <img src="{{ auction.image }}" class="card-img-top" alt="{{ auction.name }}">
+                        <img src="{{ auction.image }}" class="card-img-top object-object-fit-cover" alt="{{ auction.name }}">
                         <div class="card-body">
                           <h5 class="card-title">{{ auction.name }}</h5>
                           <p class="card-text">{{ auction.description }}</p>

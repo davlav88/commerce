@@ -61,7 +61,7 @@
     </nav>
 
     {% if message %}
-      <div class="alert alert-danger" role="alert">
+      <div class="alert {{alert_class}}" role="alert">
         {{message}}
       </div>
     {% endif %}
