@@ -1,12 +1,11 @@
 {% extends "auctions/layout.html" %}
 
-{% block body %}
 
+{% block body %}
+<div class="container-fluid">
     <h2>Active Listings</h2>
 
     {% if auctions %}
-
-    <div class="container">
         <div class="row row-cols-3 g-3">
             {% for auction in auctions %}
                 <div class="col">
@@ -15,14 +14,13 @@
                         <div class="card-body">
                           <h5 class="card-title">{{ auction.name }}</h5>
                           <p class="card-text">{{ auction.description }}</p>
-                          <p class="card-text">{{ auction.price }}$</p>
+                          <p class="card-text">Opening price: {{ auction.price }}$</p>
                           <a href="{% url 'listings' auction.id %}" class="btn btn-primary">View Auction</a>
                         </div>
                       </div>
                 </div>
             {% endfor %}
         </div>
-      </div>
-
       {% endif %}
+    </div>
 {% endblock %}

@@ -1,12 +1,9 @@
-from unicodedata import category
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-
-import auctions
 
 from .models import User, Auctions, Bids, Comments, Watchlist, Winners, Categories
 
@@ -88,7 +85,7 @@ def create(request):
         user = request.user
         status = "open"
         
-        if type(price) == int and price > 0:
+        if int(price) > 0:
             Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}", category=category)
         else:
             message = "Price must be a positive integer"
@@ -113,9 +110,8 @@ def listings(request, id):
         except Winners.DoesNotExist:
             winner = "No winner yet"
             
-        try:
-            highest_bid = Bids.objects.filter(item__id=id).order_by('-price').first()
-        except highest_bid.DoesNotExist:
+        highest_bid = Bids.objects.filter(item__id=id).order_by('-price').first()
+        if highest_bid is None:
             highest_bid = "No bids yet"
 
             
@@ -130,7 +126,7 @@ def listings(request, id):
                 button = "Remove from Watchlist"   
             else:
                 button = "Add to Watchlist"
-            
+                        
             return render(request, "auctions/listings.html",{
                 "listing": q,
                 "button": button,

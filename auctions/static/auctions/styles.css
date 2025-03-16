@@ -2,3 +2,7 @@ body {
     padding: 10px;
 }
 
+.card .card-img-top {
+    max-height: 8em!important;
+    object-fit: cover!important;
+}

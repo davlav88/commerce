@@ -1,111 +1,114 @@
 {% extends "auctions/layout.html" %} {% block body %}
 
-<h2>{{ listing.name }}</h2>
+<div class="container-fluid">
+  <h2>{{ listing.name }}</h2>
 
-<img src="{{ listing.image }}" class="card-img-top" alt="{{ listing.name }}" />
+  <img src="{{ listing.image }}" class="card-img-top" alt="{{ listing.name }}" />
 
-<ul class="list-group my-4">
-  <li class="list-group-item list-group-item-secondary" aria-current="true">
-    <h5 class="card-title">Listing name: {{ listing.name }}</h5>
-  </li>
-  <li class="list-group-item">
-    <p class="card-text">Description: {{ listing.description }}</p>
-  </li>
-  <li class="list-group-item">
-    <p class="card-text">Listing price: {{ listing.price }}$</p>
-  </li>
-</ul>
+  <ul class="list-group my-4">
+    <li class="list-group-item list-group-item-secondary" aria-current="true">
+      <h5 class="card-title">Listing name: {{ listing.name }}</h5>
+    </li>
+    <li class="list-group-item">
+      <p class="card-text">Description: {{ listing.description }}</p>
+    </li>
+    <li class="list-group-item">
+      <p class="card-text">Listing price: {{ listing.price }}$</p>
+    </li>
+  </ul>
 
-<ul class="list-group">
-  <li class="list-group-item">Auction Status: {{ listing.status }}</li>
-  <li class="list-group-item">Created by: {{ creator.username }}</li>
-  {% if user == winner %}
-  <li class="list-group-item">You have won the auction !</li>
-  {% endif%} 
-  
-  {% if user != winner and winner %}
-  <li class="list-group-item">Auction Winner: {{ winner }}</li>
-  {% endif%}
-  <li class="list-group-item">Current Highest Bid: {{ highest_bid }}</li>
-</ul>
+  <ul class="list-group">
+    <li class="list-group-item">Auction Status: {{ listing.status }}</li>
+    <li class="list-group-item">Created by: {{ creator.username }}</li>
+    {% if user == winner %}
+    <li class="list-group-item">You have won the auction !</li>
+    {% endif%} 
+    
+    {% if user != winner and winner %}
+    <li class="list-group-item">Auction Winner: {{ winner }}</li>
+    {% endif%}
+    <li class="list-group-item">Current Highest Bid: {{ highest_bid }}</li>
+  </ul>
 
-{% if listing.status == "open" %}
-<div class="my-4">
-  <form method="POST" action="{% url 'listings' listing.id %}">
-    {% csrf_token %}
-    <input
-      class="btn btn-primary"
-      type="submit"
-      name="watchlist"
-      value="{{button}}"
-    />
-  </form>
-</div>
-
-<div class="mb-4">
-  <form method="POST" action="{% url 'listings' listing.id %}">
-    {% csrf_token %}
-    <div class="input-group mb-3">
-      <span class="input-group-text">$</span>
+  {% if listing.status == "open" %}
+  <div class="my-4">
+    <form method="POST" action="{% url 'listings' listing.id %}">
+      {% csrf_token %}
       <input
-        type="text"
-        name="bid_amount"
-        class="form-control"
-        aria-label="Amount (to the nearest dollar)"
+        class="btn btn-primary"
+        type="submit"
+        name="watchlist"
+        value="{{button}}"
       />
-      <span class="input-group-text">.00</span>
-    </div>
-    <input
-      class="btn btn-secondary"
-      type="submit"
-      name="bid"
-      value="Place bid"
-    />
-  </form>
-</div>
-{% if user.id == creator %}
-<div class="mb-4">
-  <form method="POST" action="{% url 'listings' listing.id %}">
-    {% csrf_token %}
-    <input
-      class="btn btn-danger"
-      type="submit"
-      name="close-auction"
-      value="Close Auction"
-    />
-  </form>
-</div>
-{% endif %} {% endif %}
-
-<div class="my-4">
-  <form method="POST" action="{% url 'listings' listing.id %}">
-    {% csrf_token %}
-    <div class="form-floating mb-2">
-      <textarea
-        name="comment"
-        class="form-control"
-        placeholder="Leave a comment here"
-        id="floatingTextarea"
-      ></textarea>
-      <label for="floatingTextarea">Comments</label>
-    </div>
-    <input
-      class="btn btn-primary"
-      type="submit"
-      name="submit_comment"
-      value="Submit Comment"
-    />
-  </form>
-</div>
-
-{% if comments %} {% for comment in comments %}
-<div class="card mb-3">
-  <div class="card-header">{{ comment.timestamp }}</div>
-  <div class="card-body">
-    <blockquote class="blockquote mb-0">
-      <p>{{ comment.comment }}</p>
-      <footer class="blockquote-footer">{{ comment.user }}</footer>
-    </blockquote>
+    </form>
   </div>
+
+  <div class="mb-4">
+    <form method="POST" action="{% url 'listings' listing.id %}">
+      {% csrf_token %}
+      <div class="input-group mb-3">
+        <span class="input-group-text">$</span>
+        <input
+          type="text"
+          name="bid_amount"
+          class="form-control"
+          aria-label="Amount (to the nearest dollar)"
+        />
+        <span class="input-group-text">.00</span>
+      </div>
+      <input
+        class="btn btn-secondary"
+        type="submit"
+        name="bid"
+        value="Place bid"
+      />
+    </form>
+  </div>
+  {% if user.id == creator %}
+  <div class="mb-4">
+    <form method="POST" action="{% url 'listings' listing.id %}">
+      {% csrf_token %}
+      <input
+        class="btn btn-danger"
+        type="submit"
+        name="close-auction"
+        value="Close Auction"
+      />
+    </form>
+  </div>
+  {% endif %} {% endif %}
+
+  <div class="my-4">
+    <form method="POST" action="{% url 'listings' listing.id %}">
+      {% csrf_token %}
+      <div class="form-floating mb-2">
+        <textarea
+          name="comment"
+          class="form-control"
+          placeholder="Leave a comment here"
+          id="floatingTextarea"
+        ></textarea>
+        <label for="floatingTextarea">Comments</label>
+      </div>
+      <input
+        class="btn btn-primary"
+        type="submit"
+        name="submit_comment"
+        value="Submit Comment"
+      />
+    </form>
+  </div>
+
+  {% if comments %} {% for comment in comments %}
+  <div class="card mb-3">
+    <div class="card-header">{{ comment.timestamp }}</div>
+    <div class="card-body">
+      <blockquote class="blockquote mb-0">
+        <p>{{ comment.comment }}</p>
+        <footer class="blockquote-footer">{{ comment.user }}</footer>
+      </blockquote>
+    </div>
+  </div>
+  {% endfor %} {% endif %} 
 </div>
-{% endfor %} {% endif %} {% endblock %}
+{% endblock %}
