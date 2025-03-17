@@ -64,7 +64,7 @@
       />
     </form>
   </div>
-  {% if user.id == creator %}
+  {% if user == creator %}
   <div class="mb-4">
     <form method="POST" action="{% url 'listings' listing.id %}">
       {% csrf_token %}

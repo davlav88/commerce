@@ -77,27 +77,38 @@ def create(request):
         })
     
     if request.method == "POST":
-        name = request.POST['name']
-        description = request.POST['description']
-        price = int(request.POST['price'])
-        image = request.POST['image']
-        category_input = request.POST['category']
-        category = Categories.objects.get(name=category_input)
-        user = request.user
-        status = "open"
-        
         try:
-            Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}", category=category)
-        except ValueError:
-            message = "Price must be a positive integer"
-            alert_class = "alert-warning"
-            return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
+            name = request.POST['name']
+            description = request.POST['description']
+            price = int(request.POST['price'])
+            image = request.POST['image']
+            category_input = request.POST['category']
+            category = Categories.objects.get(name=category_input)
+            user = request.user
+            status = "open"
+            
+            if name and description and price:
+                if price > 0:
+                    Auctions.objects.create(user=user, name=f"{name}", description=f"{description}", image=f"{image}", price=f"{price}", category=category)
+                    
+                    return render(request, "auctions/index.html", {
+                    "message": "Auction created",
+                    "alert_class":"alert-success",
+                    "auctions": Auctions.objects.all()
+                })
+                else:
+                    message = "Price must be a positive integer"
+                    return HttpResponseRedirect(reverse("create") + f"?message={message}")
+                    
+            else:
+                message = "Incomplete listing"
+                return HttpResponseRedirect(reverse("create") + f"?message={message}")
+                
+        except:
+            message = "Error, try again"
+            return HttpResponseRedirect(reverse("create") + f"?message={message}")
+        
 
-        return render(request, "auctions/index.html", {
-                "message": "Auction created",
-                "alert_class":"alert-success",
-                "auctions": Auctions.objects.all()
-            })
         
 @login_required          
 def listings(request, id):
@@ -181,7 +192,7 @@ def listings(request, id):
     if request.method == "POST" and 'bid' in request.POST:
         user = request.user
         auction = Auctions.objects.get(pk=id)
-        bid_amount = request.POST['bid_amount']
+        bid_amount = int(request.POST['bid_amount'])
         
         if bid_amount > 0:
         
@@ -235,10 +246,7 @@ def listings(request, id):
             alert_class = "alert-danger"
             return HttpResponseRedirect(f'/listings/{id}?message={message}&alert_class={alert_class}')
 
-        
-
-    
-    return HttpResponseRedirect(reverse("index"))
+    return HttpResponseRedirect(f'/listings/{id}')
         
         
 @login_required               
